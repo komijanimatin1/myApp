@@ -13,20 +13,6 @@ import {
 import { IonReactRouter } from "@ionic/react-router";
 import { Route } from "react-router-dom";
 
-// Types for Cordova InAppBrowser
-interface CordovaWithInAppBrowser extends Cordova {
-  InAppBrowser: {
-    open: (url: string, target: string, options: string) => InAppBrowserRef;
-  };
-}
-
-interface InAppBrowserRef {
-  addEventListener: (event: string, callback: (event: any) => void) => void;
-  removeEventListener: (event: string, callback: (event: any) => void) => void;
-  executeScript: (details: { code: string }) => Promise<any[]>;
-  close: () => void;
-}
-
 // 🔥 آرایه گلوبال از دکمه‌ها
 const buttonData = [
   { url: "https://4-player.ir", label: "A", site: "4-Player" },
@@ -40,7 +26,7 @@ const buttonData = [
 // صفحه اصلی
 const HomePage: React.FC = () => {
   const openWebView = useCallback((url: string, site: string) => {
-    const cordovaInstance = window.cordova as CordovaWithInAppBrowser | undefined;
+    const cordovaInstance = (window as any).cordova;
 
     if (!cordovaInstance?.InAppBrowser) {
       console.warn("Cordova InAppBrowser plugin is not available, fallback to window.open");
@@ -54,6 +40,9 @@ const HomePage: React.FC = () => {
       `location=no,zoom=no,fullscreen=yes,footer=yes,footertitle=${site},closebuttoncaption=Close,closebuttoncolor=#5d5d5d,injectbutton=yes,hardwareback=yes`
     );
 
+    // The native AI button in the footer will handle the HTML content display automatically
+    // No need to inject JavaScript since the native implementation already does this
+
     // Listen for AI button click events
     const aiButtonListener = (event: any) => {
       console.log("AI Button clicked!", event);
@@ -66,7 +55,6 @@ const HomePage: React.FC = () => {
     };
 
     // Add event listeners
-    // Removed loadStopListener - no more automatic alert on page load
     browser.addEventListener("inject", aiButtonListener); // Listen for inject events from AI button
 
     const exitListener = () => {
