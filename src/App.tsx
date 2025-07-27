@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import {
   IonApp,
   IonPage,
@@ -11,7 +11,7 @@ import {
   IonText
 } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
-import { Route, useHistory, useLocation } from "react-router-dom";
+import { Route } from "react-router-dom";
 
 // Types for Cordova InAppBrowser
 interface CordovaWithInAppBrowser extends Cordova {
@@ -37,13 +37,9 @@ const buttonData = [
   { url: "https://google.com", label: "F", site: "Google" },
 ];
 
-// 🆕 صفحه دوم
-const NewPage: React.FC = () => {
-  const history = useHistory();
-  const location = useLocation<{ url: string, label: string, site: string }>();
-  const { url, label, site } = location.state || {}; // داده ارسال‌شده
-
-  const openWebView = useCallback(() => {
+// صفحه اصلی
+const HomePage: React.FC = () => {
+  const openWebView = useCallback((url: string, site: string) => {
     const cordovaInstance = window.cordova as CordovaWithInAppBrowser | undefined;
 
     if (!cordovaInstance?.InAppBrowser) {
@@ -55,67 +51,30 @@ const NewPage: React.FC = () => {
     const browser = cordovaInstance.InAppBrowser.open(
       url,
       "_blank",
-      "location=no,hidden=no,hardwareback=yes,enableViewportScale=yes,mediaPlaybackRequiresUserAction=no,allowInlineMediaPlayback=yes,keyboardDisplayRequiresUserAction=no,toolbar=yes,debug=yes"
+      `location=no,zoom=no,fullscreen=yes,footer=yes,footertitle=${site},closebuttoncaption=Close,closebuttoncolor=#5d5d5d,injectbutton=yes,hardwareback=yes`
     );
 
-    const loadStopListener = () => {
-      const jsCode = `
-        (function() {
-          var html = document.body.innerHTML;
-          var parts = [];
-          for (var i = 0; i < 1; i++) {
-            parts.push(html.substring(i * 1000, (i + 1) * 1000));
-          }
-          return parts;
-        })();
-      `;
-
-      // @ts-ignore
-      browser.executeScript({ code: jsCode }, function (params) {
-        for (var i = 0; i < params[0].length; i++) {
-          alert(params[0][i]);
-        }
-      });
+    // Listen for AI button click events
+    const aiButtonListener = (event: any) => {
+      console.log("AI Button clicked!", event);
+      
+      // If we want to handle AI button clicks on JavaScript side as well
+      if (event.type === "inject") {
+        console.log("AI Button inject event received:", event);
+        // Additional JavaScript-side processing can be added here
+      }
     };
 
-    browser.addEventListener("loadstop", loadStopListener);
+    // Add event listeners
+    // Removed loadStopListener - no more automatic alert on page load
+    browser.addEventListener("inject", aiButtonListener); // Listen for inject events from AI button
 
     const exitListener = () => {
-      browser.removeEventListener("loadstop", loadStopListener);
+      browser.removeEventListener("inject", aiButtonListener);
       browser.removeEventListener("exit", exitListener);
     };
     browser.addEventListener("exit", exitListener);
-  }, [url]);
-
-  // 🟢 وقتی صفحه لود شد، WebView باز شود
-  useEffect(() => {
-    if (url) {
-      openWebView();
-    }
-  }, [url, openWebView]);
-
-  return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar color="primary">
-          <IonTitle>{site}</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent
-        className="ion-text-center ion-padding"
-        style={{ background: "blue" }}
-      >
-        <IonButton color="light" onClick={() => history.goBack()}>
-          Back
-        </IonButton>
-      </IonContent>
-    </IonPage>
-  );
-};
-
-// صفحه اصلی
-const HomePage: React.FC = () => {
-  const history = useHistory();
+  }, []);
 
   return (
     <IonPage>
@@ -156,9 +115,7 @@ const HomePage: React.FC = () => {
                   alignItems: "center",
                   justifyContent: "center",
                 }}
-                onClick={() =>
-                  history.push("/new", { url, label, site })
-                }
+                onClick={() => openWebView(url, site)}
               >
                 {label}
               </IonButton>
@@ -177,7 +134,6 @@ const App: React.FC = () => {
       <IonReactRouter>
         <IonRouterOutlet>
           <Route exact path="/" component={HomePage} />
-          <Route path="/new" component={NewPage} />
         </IonRouterOutlet>
       </IonReactRouter>
     </IonApp>
