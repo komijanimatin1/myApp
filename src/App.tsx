@@ -37,7 +37,7 @@ const HomePage: React.FC = () => {
     const browser = cordovaInstance.InAppBrowser.open(
       url,
       "_blank",
-      `location=no,zoom=no,fullscreen=yes,footer=yes,footertitle=${site},closebuttoncaption=Close,closebuttoncolor=#5d5d5d,injectbutton=yes,hardwareback=yes`
+      `location=no,zoom=no,fullscreen=yes,footer=yes,footertitle=${site},closebuttoncaption=Close,closebuttoncolor=#5d5d5d,injectbutton=yes,menu=yes,hardwareback=yes`
     );
 
     // The native AI button in the footer will handle the HTML content display automatically
